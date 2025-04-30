@@ -1,0 +1,18 @@
+{
+  "proteins": ["crusted beef steak"],
+  "sides": ["mashed potatoes", "asparagus"],
+  "sauces": ["red wine reduction"],
+  "garnishes": ["microgreens"]
+}
+{
+  "proteins": ["fried crab cake"],
+  "sides": [],
+  "sauces": ["creamy sauce"],
+  "garnishes": ["sliced cherry tomatoes", "microgreens"]
+}
+{
+  "proteins": ["grilled steak"],
+  "sides": [],
+  "sauces": ["creamy sauce"],
+  "garnishes": []
+}
