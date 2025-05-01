@@ -2,6 +2,7 @@ from openai import OpenAI
 import base64
 import json
 import os
+import sqlite3
 
 
 client = OpenAI(api_key='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')
@@ -26,6 +27,13 @@ Example output:
 ]
 '''
 
+"""
+We later convert the dictionary output into a list to run the database query
+however we keep the data in a dictionary format from the start because it gives
+more flexibility to improve the program without changing the data flow.
+For example, we could weight the results to certain categories like proteins
+when suggesting recipes to the user
+"""
 
 
 def fetch_dishes(image_path):
@@ -38,7 +46,7 @@ def fetch_dishes(image_path):
 
     response = client.responses.create(
         # GPT 4.1 seems to be the optimal cost and accuracy model
-        # 4.1 mini works as well slightly cheaper
+        # 4.1 mini works as well slightly cheaper and slightly less accurate
         model="gpt-4.1",
         input=[
             {"role": "system", "content": content},
@@ -59,50 +67,128 @@ def fetch_dishes(image_path):
 
 def write_each_dish_to_file(dish):
     # Creates a json file for each dish component named dish_(id)
+    # Saving in separate files so that a grilled cheese stays separate from tomato soup
     os.makedirs("components", exist_ok=True)
-    for id, d in enumerate(dish, start=1):
+    for id, dish in enumerate(dish, start=1):
+        # looping through the list returned from the output of the ai
+        # Then writing the contents to a file called dish_id.json
         path = os.path.join("components", f"dish_{id}.json")
         with open(path, "w", encoding="utf-8") as file:
-            json.dump(d, file, ensure_ascii=False, indent=2)
+            # Writing json to file
+            # dish = {"proteins": ["cheese"], "sides": ["bread"], "sauces": [], "garnishes": []}
+            json.dump(dish, file, ensure_ascii=False, indent=2)
 
 
 
-def find_recipe_by_components(db_path, components, base_ingredients):
+def find_recipes_by_json(db_path, components):
 
-    """
-    db_path - sqlite path to database
-    components - dict containing components
-    {
-      "proteins": ["cheese"],
-      "sides": ["bread", "tomato soup"],
-      "sauces": ["balsamic reduction"],
-      "garnishes": []
-    }
-    base_ingredients - list of ingredients
-    """
+    # Creating an empty list to hold values to search database
+    search_terms = []
+    for items in components.values():
+        for item in items:
+            # append the list
+            search_terms.append(item)
 
-    ''' Pseudo Code
-    1. Open Database
-    
-    2. Create list of search terms
-    ['proteins', 'sides', 'sauces', 'garnishes']
-    allow for adding more later if needed]-
-    
-    3. Search database using ingredients from dict input
-    if no ingredient inside a dict segment, skip
-    
-    match recipes based on if contains ingredient
-    (Maybe we show all results if contains 1 ingredient for testing now)
-    
-    4. close database connection
-    
-    5. return list of recipes containing ingredients
+    # conditions
+    conditions = ' OR '.join('i.ingredient LIKE ?' for _ in search_terms)
+    search_terms = [f'%{term}%' for term in search_terms]
+
     '''
+    SQL query to search for recipes that contain ingredients of search_terms
+    
+    r.id -> the recipes ID in database
+    r.name -> the name of the recipe
+    d.name AS dish_name -> the name of the fish from the database
+    i.ingredient -> the ingredient from the ingredients table matching the search
+    "Give me the recipe ID, recipe name, dish name, and the matching ingredient"
+    
+    FROM ingredients i
+    "Start from the ingredients table and call it i for short"
+    
+    JOIN recipes r ON i.recipe_id = r.id -> connects each ingredient.recipe_id to recipes.id
+    "Find the recipe this ingredient belongs to"
+    
+    JOIN dishes d ON r.dish_id = d.id -> connects each recipe.dish_id to dishes.id
+    "Find the dish this recipe is a part of"
+    
+    WHERE i.ingredient LIKE ? OR i.ingredient LIKE ? -> filter for matches | ? is a palceholder for search_terms[]
+    "Only return where the ingredient contains search terms"
+    
+    ORDER BY r.id
+    "order rows by recipe ID"
+    
+    
+    '''
+    query = f'''
+        SELECT r.id, r.name, d.name AS dish_name, i.ingredient
+        FROM ingredients i
+        JOIN recipes r ON i.recipe_id = r.id
+        JOIN dishes d ON r.dish_id = d.id
+        WHERE {conditions}
+        ORDER BY r.id;
+        '''
 
-    return None
+    # Connect to database, execute query, assign results, close connection
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    print("SQL Query:", query)
 
+    cursor.execute(query, search_terms)
+    results = cursor.fetchall()
+    connection.close()
+
+    return results
+
+
+
+def load_components_from_file(filepath):
+    with open(filepath, 'r', encoding='utf-8') as file:
+        components = json.load(file)
+
+    print("Loaded components:", components)
+
+    return components
+
+def get_recipe_steps(db_path, recipe_id):
+    # Takes result from earlier query and returns all steps for matches
+    connection = sqlite3.connect(db_path)
+    cursor = connection.cursor()
+    cursor.execute('''
+        SELECT step_order, instruction
+        FROM steps
+        WHERE recipe_id = ?
+        ORDER BY step_order;
+    ''', (recipe_id,))
+    steps = cursor.fetchall()
+    connection.close()
+    return steps
 
 if __name__ == "__main__":
-    dishe = fetch_dishes("Food/HerbCrustedTenderloin.jpg")
-    write_each_dish_to_file(dishe)
-    print(f"Jobs done, wrote {len(dishe)} files.")
+    '''
+    # This code handles the AI recognition of the image and saves to components
+    dishes = fetch_dishes("Food/GrilledCheeseTomatoBisque.jpg")
+    write_each_dish_to_file(dishes)
+    #print(f"Jobs done, wrote {len(dishes)} files.")
+    '''
+
+
+
+
+    # Proceeding code searches the database based on the components of the dish.json file
+
+    # Write a for loop here to iterate this section through the files inside components
+    # at end of loop delete the file that has been iterated through
+
+    matches = find_recipes_by_json('recipes.db', load_components_from_file('components/dish_1.json'))
+    if matches:
+        seen_recipes = set()
+        for recipe_id, recipe_name, dish_name, count in matches:
+            print(f"{dish_name} → {recipe_name} (matched {count} ingredients)")
+            steps = get_recipe_steps('recipes.db', recipe_id)
+            print("Steps:")
+            for step_number, description in steps:
+                print(f"  {step_number}. {description}")
+
+    else:
+
+        print("No matches")
