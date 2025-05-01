@@ -57,13 +57,13 @@ def fetch_dishes(image_path):
     return json.loads(response.output_text)
 
 
-def write_each_dish_to_file(dishes):
+def write_each_dish_to_file(dish):
     # Creates a json file for each dish component named dish_(id)
     os.makedirs("components", exist_ok=True)
-    for id, dish in enumerate(dishes, start=1):
+    for id, d in enumerate(dish, start=1):
         path = os.path.join("components", f"dish_{id}.json")
         with open(path, "w", encoding="utf-8") as file:
-            json.dump(dish, file, ensure_ascii=False, indent=2)
+            json.dump(d, file, ensure_ascii=False, indent=2)
 
 
 
@@ -103,6 +103,6 @@ def find_recipe_by_components(db_path, components, base_ingredients):
 
 
 if __name__ == "__main__":
-    dishes = fetch_dishes("Food/GrilledCheeseTomatoBisque.jpg")
-    write_each_dish_to_file(dishes)
-    print(f"Jobs done, wrote {len(dishes)} files.")
+    dishe = fetch_dishes("Food/HerbCrustedTenderloin.jpg")
+    write_each_dish_to_file(dishe)
+    print(f"Jobs done, wrote {len(dishe)} files.")
