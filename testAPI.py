@@ -167,18 +167,19 @@ def load_components_from_file(filepath):
 
 if __name__ == "__main__":
 
-    image_path = input("Enter the image path of the food you wish to scan: ")
-    num_dishes = input("Enter how many dishes you wish to scan: ")
     # -----This code handles the AI recognition of the image and saves to components-----
 
-    # dishes = fetch_dishes("Food/GrilledCheeseTomatoBisque.jpg")
-    # write_each_dish_to_file(dishes)
-    # print(f"Jobs done, wrote {len(dishes)} files.")
+    dishes = fetch_dishes("Food/SalmonDish.jpg")
+    write_each_dish_to_file(dishes)
+    print(f"Jobs done, wrote {len(dishes)} files.")
 
     # -----Proceeding code searches the database based on the components of the dish.json file-----
     #                  --------------------TO DO--------------------
     # Write a for loop here to iterate this section through the files inside components
     # at end of loop delete the file that has been iterated through
+
+
+    '''
     matches = find_recipes_by_json('recipes.db', load_components_from_file('components/dish_1.json'))
     print("Matches: ", matches)
     if matches:
@@ -193,3 +194,4 @@ if __name__ == "__main__":
     else:
 
         print("No matches")
+    '''
