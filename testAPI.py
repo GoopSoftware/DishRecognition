@@ -5,7 +5,7 @@ import os
 import sqlite3
 
 client = OpenAI(
-    api_key='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')
+    api_key='')
 
 content = '''
 You are a kitchen assistant. You will receive a dish picture and must output exactly one JSON array with four keys per item:
@@ -103,30 +103,32 @@ def find_recipes_by_json(db_path, components):
         WHERE {conditions}
         ORDER BY r.id;
         '''
+
+
     '''
-        SQL query to search for recipes that contain ingredients of search_terms
+    SQL query to search for recipes that contain ingredients of search_terms
 
-        r.id -> the recipes ID in database
-        r.name -> the name of the recipe
-        d.name AS dish_name -> the name of the fish from the database
-        i.ingredient -> the ingredient from the ingredients table matching the search
-        "Give me the recipe ID, recipe name, dish name, and the matching ingredient"
+    r.id -> the recipes ID in database
+    r.name -> the name of the recipe
+    d.name AS dish_name -> the name of the fish from the database
+    i.ingredient -> the ingredient from the ingredients table matching the search
+    "Give me the recipe ID, recipe name, dish name, and the matching ingredient"
 
-        FROM ingredients i
-        "Start from the ingredients table and call it i for short"
+    FROM ingredients i
+    "Start from the ingredients table and call it i for short"
 
-        JOIN recipes r ON i.recipe_id = r.id -> connects each ingredient.recipe_id to recipes.id
-        "Find the recipe this ingredient belongs to"
+    JOIN recipes r ON i.recipe_id = r.id -> connects each ingredient.recipe_id to recipes.id
+    "Find the recipe this ingredient belongs to"
 
-        JOIN dishes d ON r.dish_id = d.id -> connects each recipe.dish_id to dishes.id
-        "Find the dish this recipe is a part of"
+    JOIN dishes d ON r.dish_id = d.id -> connects each recipe.dish_id to dishes.id
+    "Find the dish this recipe is a part of"
 
-        WHERE i.ingredient LIKE ? OR i.ingredient LIKE ? -> filter for matches | ? is a palceholder for search_terms[]
-        "Only return where the ingredient contains search terms"
+    WHERE i.ingredient LIKE ? OR i.ingredient LIKE ? -> filter for matches | ? is a palceholder for search_terms[]
+    "Only return where the ingredient contains search terms"
 
-        ORDER BY r.id
-        "order rows by recipe ID"
-        '''
+    ORDER BY r.id
+    "order rows by recipe ID"
+    '''
 
     # Connect to database, execute query, assign results, close connection
     connection = sqlite3.connect(db_path)
@@ -168,30 +170,31 @@ def load_components_from_file(filepath):
 if __name__ == "__main__":
 
     # -----This code handles the AI recognition of the image and saves to components-----
-
-    dishes = fetch_dishes("Food/SalmonDish.jpg")
+    '''
+    dishes = fetch_dishes("Food/HerbCrustedTenderloin.jpg")
     write_each_dish_to_file(dishes)
     print(f"Jobs done, wrote {len(dishes)} files.")
-
+    '''
     # -----Proceeding code searches the database based on the components of the dish.json file-----
     #                  --------------------TO DO--------------------
     # Write a for loop here to iterate this section through the files inside components
     # at end of loop delete the file that has been iterated through
 
 
-    '''
+
     matches = find_recipes_by_json('recipes.db', load_components_from_file('components/dish_1.json'))
     print("Matches: ", matches)
     if matches:
         seen_recipes = set()
         for recipe_id, recipe_name, dish_name, count in matches:
-            print(f"{dish_name} → {recipe_name} (matched {count} ingredients)")
-            steps = get_recipe_steps('recipes.db', recipe_id)
-            print("Steps:")
-            for step_number, description in steps:
-                print(f"  {step_number}. {description}")
+            if recipe_id not in seen_recipes:
+                print(f"{dish_name} → {recipe_name} (matched {count} ingredients)")
+                steps = get_recipe_steps('recipes.db', recipe_id)
+                print("Steps:")
+                for step_number, description in steps:
+                    print(f"  {step_number}. {description}")
+                seen_recipes.add(recipe_id)
 
     else:
 
         print("No matches")
-    '''

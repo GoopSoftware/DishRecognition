@@ -1,10 +1,15 @@
 {
   "proteins": [
-    "cheese"
+    "beef"
   ],
   "sides": [
-    "bread"
+    "mashed potatoes",
+    "asparagus"
   ],
-  "sauces": [],
-  "garnishes": []
+  "sauces": [
+    "red wine reduction"
+  ],
+  "garnishes": [
+    "microgreens"
+  ]
 }
