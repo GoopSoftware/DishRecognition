@@ -31,25 +31,32 @@ A simple Python utility that:
 
 ---
 
+## Usage
+
 All functions live in main.py. Here's what each does:
+## fetch_dishes()
 fetch_dishes(image_path) -> list[dict]
 - **Input:** Path to JPEG dish image - Food/SalmonFrigger.jpg
 - **Output:** A dictionary of dish components
 
+## write_each_dish_to_file()
 write_each_dish_to_file(dishes)
 - **Input:** The list returned by fetch_dishes()
 - **Effect:** Writes each item to a .json file
 
+## load_components_from_file()
 load_components_from_file(filepath)
 - **Input:** Path to a JSON file
 -  **Output:** A loaded dict of components
 
+## find_recipes_by_json()
 find_recipes_by_json(db_path, components)
 - **Input:**
     - db_path - path to the database
     - components - One dishes components (JSON)
  - **Output:** A list of recipe_id, recipe_name, dish_name, matchingIngredients for any recipe matched in the database
 
+## get_recipe_steps()
 get_recipe_steps(db_path, recipe_id)
 - **Input:**
     - db_path - path to the database
